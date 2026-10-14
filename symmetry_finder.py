@@ -835,19 +835,18 @@ def find_symmetry_elements(symbols, coords):
                     if c2_total >= 3:
                         if has_inversion:
                             if sigma_types['d']:
-                                pg = 'Td'  # Actually Td requires C4; this case shouldn't happen with c4_main==0. Just use Th for inversion.
+                                pg = 'Td'
                             else:
                                 pg = 'Th'
                         else:
                             if sigma_types['d'] or num_planes > 0:
-                                # Could be Td if C4 exists, but we have c4_main==0, so treat as T with some mirror? Not standard.
-                                pg = 'T'
+                                pg = 'Td'
                             else:
                                 pg = 'T'
                     else:
                         # Only C3 diagonals, no perpendicular C2
                         if has_inversion:
-                            pg = 'Th'  # But Th needs C2; fallback
+                            pg = 'Th'
                         else:
                             pg = 'T'
             elif len(c5_axes) >= 6:
