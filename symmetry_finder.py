@@ -143,7 +143,7 @@ def find_symmetry_elements(symbols, coords):
     # --- Rotation axes detection ---
     rotation_info = {}  # key -> order
     # Test common orders
-    orders_to_test = [2, 3, 4, 5, 6]
+    orders_to_test = [2, 3, 4, 5, 6, 8]
     for axis in axes:
         for order in orders_to_test:
             angle = 360 / order
