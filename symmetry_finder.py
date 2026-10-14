@@ -694,17 +694,16 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     pg = 'C2'
         elif max_order == 3:
-            # For D3h: need σh + at least 1 perpendicular C2 (ideally 3, but detection may miss some)
             if sigma_types['h'] and perp_c2 >= 1:
                 pg = 'D3h'
-            elif perp_c2 >= 2:
+            elif perp_c2 >= 1:
                 if has_inversion:
                     pg = 'D3d'
                 else:
                     if sigma_types['h']:
                         pg = 'D3h'
                     elif sigma_types['d']:
-                        pg = 'D3d'  # requires inversion; may be misdetected
+                        pg = 'D3d'
                     else:
                         pg = 'D3'
             else:
@@ -749,10 +748,10 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     pg = 'C4'
         elif max_order == 5:
-            # D5h: σh + any perpendicular C2 (even just 1 detected) + C5
+            # Relax perp_c2 threshold for D5 since detection may miss some axes
             if sigma_types['h'] and perp_c2 >= 1:
                 pg = 'D5h'
-            elif perp_c2 >= 4:
+            elif perp_c2 >= 2:
                 if has_inversion:
                     if sigma_types['d']:
                         pg = 'D5d'
@@ -766,12 +765,15 @@ def find_symmetry_elements(symbols, coords):
                     else:
                         pg = 'D5'
             else:
-                if sigma_types['v'] or sigma_types['d']:
+                # Could be C5v or C5h (horizontal mirror but no perpendicular C2)
+                if sigma_types['h']:
+                    pg = 'C5h'
+                elif sigma_types['v'] or sigma_types['d']:
                     pg = 'C5v'
                 else:
                     pg = 'C5'
         elif max_order == 6:
-            if perp_c2 >= 4:
+            if perp_c2 >= 2:
                 if has_inversion:
                     if sigma_types['h']:
                         pg = 'D6h'
