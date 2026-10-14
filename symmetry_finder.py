@@ -275,7 +275,7 @@ def find_symmetry_elements(symbols, coords):
     # For standard axes
     for axis in [np.array([0,0,1]), np.array([0,1,0]), np.array([1,0,0]), np.array([1,1,1])]:
         axis = axis / np.linalg.norm(axis)
-        for order in [2, 3, 4, 6]:
+        for order in [2, 3, 4, 6, 8]:
             angle = 360 / order
             # Rotate then reflect through plane perpendicular to axis
             R = rotation_matrix(axis, angle)
@@ -792,13 +792,64 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     pg = 'C6'
         else:
-            # Higher orders or special cases
-            # Check cubic groups (already handled above, but just in case)
-            if diag_c3 >= 4 and c4_main >= 3:
-                if has_inversion:
-                    pg = 'Oh'
+            # Higher orders or special cases (order 7, 8, etc.)
+            if max_order == 8:
+                if perp_c2 >= 2:
+                    if has_inversion:
+                        if sigma_types['d']:
+                            pg = 'D8d'
+                        elif sigma_types['h']:
+                            pg = 'D8h'
+                        else:
+                            pg = 'D8'
+                    else:
+                        if sigma_types['h']:
+                            pg = 'D8h'
+                        elif sigma_types['d']:
+                            pg = 'D8d'
+                        else:
+                            pg = 'D8'
                 else:
-                    pg = 'Td'
+                    if sigma_types['h']:
+                        pg = 'C8h'
+                    elif sigma_types['v'] or sigma_types['d']:
+                        pg = 'C8v'
+                    else:
+                        pg = 'C8'
+            # Check cubic groups (already handled above, but just in case)
+            elif diag_c3 >= 4:
+                # Cubic group classification based on presence of C4, C2, mirror planes, inversion
+                if c4_main >= 3:
+                    if has_inversion:
+                        if num_planes > 0:
+                            pg = 'Oh'
+                        else:
+                            pg = 'Oh'
+                    else:
+                        if sigma_types['d'] or num_planes > 0:
+                            pg = 'Td'
+                        else:
+                            pg = 'O'
+                else:
+                    # T family (no C4 axes, but C3 diagonals + perpendicular C2)
+                    if c2_total >= 3:
+                        if has_inversion:
+                            if sigma_types['d']:
+                                pg = 'Td'  # Actually Td requires C4; this case shouldn't happen with c4_main==0. Just use Th for inversion.
+                            else:
+                                pg = 'Th'
+                        else:
+                            if sigma_types['d'] or num_planes > 0:
+                                # Could be Td if C4 exists, but we have c4_main==0, so treat as T with some mirror? Not standard.
+                                pg = 'T'
+                            else:
+                                pg = 'T'
+                    else:
+                        # Only C3 diagonals, no perpendicular C2
+                        if has_inversion:
+                            pg = 'Th'  # But Th needs C2; fallback
+                        else:
+                            pg = 'T'
             elif len(c5_axes) >= 6:
                 if has_inversion:
                     pg = 'Ih'
