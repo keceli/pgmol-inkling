@@ -758,7 +758,7 @@ def find_symmetry_elements(symbols, coords):
             # Relax perp_c2 threshold for D5 since detection may miss some axes
             if sigma_types['h'] and perp_c2 >= 1:
                 pg = 'D5h'
-            elif perp_c2 >= 2:
+            elif perp_c2 >= 1:
                 if has_inversion:
                     if sigma_types['d']:
                         pg = 'D5d'
@@ -803,17 +803,19 @@ def find_symmetry_elements(symbols, coords):
             if max_order == 8:
                 if perp_c2 >= 2:
                     if has_inversion:
-                        if sigma_types['d']:
-                            pg = 'D8d'
-                        elif sigma_types['h']:
-                            pg = 'D8h'
-                        else:
-                            pg = 'D8'
-                    else:
-                        if sigma_types['h']:
+                        if sigma_types['h'] or num_planes >= 3:
                             pg = 'D8h'
                         elif sigma_types['d']:
                             pg = 'D8d'
+                        else:
+                            pg = 'D8'
+                    else:
+                        if sigma_types['h'] and not sigma_types['d']:
+                            pg = 'D8h'
+                        elif sigma_types['d']:
+                            pg = 'D8d'
+                        elif sigma_types['h']:
+                            pg = 'D8h'
                         else:
                             pg = 'D8'
                 else:
