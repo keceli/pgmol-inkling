@@ -138,6 +138,56 @@ def find_symmetry_elements(symbols, coords):
 
     axes = [v for v in axes_set.values()]
 
+    # --- Fast targeted perpendicular axis derivation for D-group detection ---
+    # Instead of projecting all pairs for all axes, we only derive extra axes
+    # for the highest-order rotation axis once, using a sample of pair directions.
+    # This avoids the expensive O(N^2 * axes) loop.
+    # We add derived axes directly to axes_set before rotation testing.
+    # We'll do a quick pass: for each pair of same-type atoms, compute direction
+    # and add both it and a perpendicular direction derived by crossing with z (or x/y)
+    # only if we have a potential high-order axis.
+    # To keep it fast, we limit derivation to a small subset.
+    if n > 1:
+        # Quick derivation: for each pair of same-type atoms, add pair direction
+        # and a derived perpendicular axis by crossing with a standard axis.
+        # We only keep unique directions.
+        extra_derived = {}
+        count_pairs = 0
+        for i in range(n):
+            if count_pairs > 30:
+                break
+            for j in range(i+1, n):
+                if count_pairs > 30:
+                    break
+                if symbols[i] == symbols[j]:
+                    count_pairs += 1
+                    v = centered[j] - centered[i]
+                    nv = np.linalg.norm(v)
+                    if nv > TOL:
+                        v_n = v / nv
+                        # Add the pair direction itself
+                        k = tuple(np.round(v_n, 3))
+                        extra_derived[k] = v_n
+                        # Derive a perpendicular direction by crossing with [1,0,0] (if not parallel)
+                        cross_dir = np.cross(np.array([1,0,0]), v_n)
+                        cross_nv = np.linalg.norm(cross_dir)
+                        if cross_nv > TOL:
+                            cross_n = cross_dir / cross_nv
+                            cross_k = tuple(np.round(cross_n, 3))
+                            extra_derived[cross_k] = cross_n
+                        # Also try crossing with [0,1,0]
+                        cross_dir2 = np.cross(np.array([0,1,0]), v_n)
+                        cross_nv2 = np.linalg.norm(cross_dir2)
+                        if cross_nv2 > TOL:
+                            cross_n2 = cross_dir2 / cross_nv2
+                            cross_k2 = tuple(np.round(cross_n2, 3))
+                            extra_derived[cross_k2] = cross_n2
+        for k, axis in extra_derived.items():
+            if k not in axes_set:
+                axes_set[k] = axis / np.linalg.norm(axis)
+
+    axes = [v for v in axes_set.values()]
+
     # --- Rotation axes detection ---
     rotation_info = {}  # key -> order
     # Test common orders
