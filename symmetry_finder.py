@@ -135,63 +135,17 @@ def find_symmetry_elements(symbols, coords):
                 nv = np.linalg.norm(v)
                 if nv > TOL:
                     axes_set[tuple(np.round(v/nv, 3))] = v/nv
-                    # Also perpendicular in plane
-                    # We'll rely on cross products later if needed
-
-    axes = [v for v in axes_set.values()]
-
-    # If high-order axis found (>2), generate additional perpendicular axes
-    # to improve detection of perpendicular C2 axes needed for Dn classification
-    high_order_axes = [axis for axis in axes if np.linalg.norm(axis) > 0]
-    if unique_axes:
-        max_o = max([k[0] for k in unique_axes])
-        if max_o >= 3:
-            # Find principal axis (highest order)
-            principal = None
-            for (o, ax_n), axis in unique_axes.items():
-                if o == max_o:
-                    principal = axis / np.linalg.norm(axis)
-                    break
-            if principal is not None:
-                # Add axes perpendicular to principal in standard orientations
-                # Generate axes in plane perpendicular to principal
-                # For z-axis: x, y, diagonals; for arbitrary: use cross products
-                # Simple approach: add axes that are perpendicular to principal
-                # using standard directions rotated
-                extra_perp = []
-                # Add standard axes rotated to be perpendicular to principal
-                # If principal is near z: x, y, diagonals in xy plane
-                # More generally: create axes by taking standard axes and subtracting projection
-                for std in standard:
-                    std_n = std / np.linalg.norm(std)
-                    proj = np.dot(std_n, principal) * principal
-                    perp = std_n - proj
-                    nv = np.linalg.norm(perp)
-                    if nv > 1e-2:
-                        perp_norm = perp / nv
-                        k = tuple(np.round(perp_norm, 3))
-                        if k not in [tuple(np.round(ax / np.linalg.norm(ax), 3)) for ax in axes_set.values()]:
-                            extra_perp.append(perp_norm)
-                # Also add axes derived from atom pair directions projected perpendicular
-                for i in range(n):
-                    for j in range(i+1, n):
-                        if symbols[i] == symbols[j]:
-                            v = centered[j] - centered[i]
-                            nv = np.linalg.norm(v)
-                            if nv > TOL:
-                                v_n = v / nv
-                                proj = np.dot(v_n, principal) * principal
-                                perp = v_n - proj
-                                nv_p = np.linalg.norm(perp)
-                                if nv_p > 1e-2:
-                                    perp_n = perp / nv_p
-                                    k = tuple(np.round(perp_n, 3))
-                                    # Check if already in axes_set values
-                                    existing = [tuple(np.round(a / np.linalg.norm(a), 3)) for a in axes_set.values()]
-                                    if k not in existing:
-                                        extra_perp.append(perp_n)
-                for p in extra_perp:
-                    axes_set[tuple(np.round(p, 3))] = p
+                    # Also add perpendicular axes (for D-group detection)
+                    # Cross product with standard directions to find perpendicular axes
+                    for std in standard:
+                        std_n = std / np.linalg.norm(std)
+                        cross_v = np.cross(v_n, std_n)
+                        nv_cross = np.linalg.norm(cross_v)
+                        if nv_cross > 1e-2:
+                            cross_n = cross_v / nv_cross
+                            k = tuple(np.round(cross_n, 3))
+                            if k not in [tuple(np.round(a / np.linalg.norm(a), 3)) for a in axes_set.values()]:
+                                axes_set[k] = cross_n
 
     axes = [v for v in axes_set.values()]
 
