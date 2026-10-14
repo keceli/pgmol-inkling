@@ -78,25 +78,38 @@ def find_symmetry_elements(symbols, coords):
             linear = False
 
     # --- Inversion ---
+    # For non-linear: every atom i must have matching atom j of same type at -r
+    # For linear: atoms on line through center must have opposite matches
     has_inversion = True
     for i in range(n):
         matched = False
         for j in range(n):
             if i == j:
+                # Atom at center is self-matching
                 if np.linalg.norm(centered[i]) < TOL:
                     matched = True
                     break
                 else:
-                    matched = False
-                    break
-            if symbols[i] == symbols[j] and np.linalg.norm(centered[i] + centered[j]) < TOL:
+                    continue  # not matched yet; try other atoms
+            if symbols[i] != symbols[j]:
+                continue
+            if np.linalg.norm(centered[i] + centered[j]) < TOL:
                 matched = True
                 break
         if not matched:
             has_inversion = False
             break
 
-    # --- Candidate axes ---
+    # Special case: single atom (or all atoms at same point) -> spherical / Kh
+    if n == 1:
+        return {
+            'point_group': 'Kh',
+            'inversion': True,
+            'rotation_axes': {},
+            'mirror_planes': [],
+            'linear': False,
+            'improper': {},
+        }
     axes_set = {}
     # Standard axes
     standard = [
@@ -314,10 +327,29 @@ def find_symmetry_elements(symbols, coords):
     # Count C2 axes total
     c2_total = len([k for k in unique_axes if k[0] == 2])
 
-    # Check cubic conditions
-    # Look for 3 C4 along x/y/z and 4 C3 along diagonals for cubic
-    has_3_c4_main = (c4_main >= 3)
-    # Count diagonal C3 axes
+    # Check Ih FIRST (before cubic groups, since Ih has C3 diagonals)
+    # Ih: 6 C5 axes, 10 C3, 15 C2, inversion
+    if len(c5_axes) >= 6:
+        if has_inversion:
+            return {
+                'point_group': 'Ih',
+                'inversion': True,
+                'rotation_axes': unique_axes,
+                'mirror_planes': mirror_planes,
+                'linear': False,
+            }
+        else:
+            return {
+                'point_group': 'I',
+                'inversion': False,
+                'rotation_axes': unique_axes,
+                'mirror_planes': mirror_planes,
+                'linear': False,
+            }
+
+    # Check cubic groups
+    # Td: 4 C3 diagonals, 3 C2 along x/y/z (not C4!), 6 σd, no inversion, has S4
+    # Oh: 4 C3 diagonals, 3 C4 along x/y/z, 6 σd + 3 σh, inversion
     diag_c3 = 0
     for (o, ax_n), axis in unique_axes.items():
         if o == 3:
@@ -328,8 +360,31 @@ def find_symmetry_elements(symbols, coords):
             if len(sorted_abs) == 3 and sorted_abs[2] > 0.5 and abs(sorted_abs[0] - sorted_abs[2]) < 0.2:
                 diag_c3 += 1
 
-    # For Oh: need 4 C3 diagonals, 3 C4, inversion, and mirror planes
-    if diag_c3 >= 4 and c4_main >= 3:
+    # Td: 4 C3 diagonals, 3 C2 along x/y/z (not C4!), 6 σd, no inversion, has S4
+    # Oh: 4 C3 diagonals, 3 C4 along x/y/z, 6 σd + 3 σh, inversion
+    # Check Td first: 4+ diagonal C3, no pure C4, no inversion, has mirror planes
+    if diag_c3 >= 4:
+        if not has_inversion:
+            # Could be Td (if C2 axes present along x/y/z) or just C3v
+            # Td requires at least 3 C2 axes along x/y/z (or S4 axes)
+            if c4_main == 0 and c2_total >= 3:
+                # Td: cubic tetrahedral
+                return {
+                    'point_group': 'Td',
+                    'inversion': False,
+                    'rotation_axes': unique_axes,
+                    'mirror_planes': mirror_planes,
+                    'linear': False,
+                }
+        # If we reach here and diag_c3 >= 4 + c4_main >= 3: Oh
+        if c4_main >= 3:
+            return {
+                'point_group': 'Oh' if has_inversion else 'Td',
+                'inversion': has_inversion,
+                'rotation_axes': unique_axes,
+                'mirror_planes': mirror_planes,
+                'linear': False,
+            }
         if has_inversion:
             # Oh: cubic octahedral
             # Check for mirror planes (at least some)
@@ -350,25 +405,6 @@ def find_symmetry_elements(symbols, coords):
                 'linear': False,
             }
 
-    # Check Ih (icosahedral): 6 C5 axes, 10 C3, 15 C2, inversion
-    if len(c5_axes) >= 6:
-        if has_inversion:
-            return {
-                'point_group': 'Ih',
-                'inversion': True,
-                'rotation_axes': unique_axes,
-                'mirror_planes': mirror_planes,
-                'linear': False,
-            }
-        else:
-            return {
-                'point_group': 'I',
-                'inversion': False,
-                'rotation_axes': unique_axes,
-                'mirror_planes': mirror_planes,
-                'linear': False,
-            }
-
     # Now general classification
     # We have max_order (highest rotation axis order) and mirror planes.
     # We also have inversion info and improper axes.
@@ -383,23 +419,53 @@ def find_symmetry_elements(symbols, coords):
     principal_order = max_order
     for (o, ax_n), axis in unique_axes.items():
         if o == principal_order:
-            # Prefer axis closest to [0,0,1] for classification logic? Just pick first.
             principal_axis = axis
             break
+
+    # Special case: max_order == 0 (no rotation axes found)
+    # But there may still be inversion (Ci) or mirror plane (Cs)
+    if max_order == 0:
+        if has_inversion:
+            pg = 'Ci'
+        elif num_planes >= 1:
+            pg = 'Cs'
+        else:
+            pg = 'C1'
+
+    # For max_order >= 2: count perpendicular C2 axes
+    perp_c2 = 0
+    if principal_axis is not None:
+        perp_dirs = []
+        for (o, ax_n), axis in unique_axes.items():
+            if o == 2:
+                dot = abs(np.dot(principal_axis, axis))
+                if dot < 1e-2:
+                    k = tuple(np.round(np.abs(axis), 3))
+                    if k not in perp_dirs:
+                        perp_dirs.append(k)
+                        perp_c2 += 1
 
     sigma_types = {'h': False, 'v': False, 'd': False}
     if principal_axis is not None:
         for norm in mirror_planes:
-            # Check relation to principal axis
+            # Normal is the direction perpendicular to the plane
+            # If normal || axis, plane is perpendicular to axis → σh
+            # If normal ⊥ axis, plane contains axis → σv (or σd if diagonal)
             dot = abs(np.dot(norm, principal_axis))
-            if dot < 1e-2:
-                # Perpendicular -> σh
+            if dot > 1 - 1e-2:
+                # Normal parallel to axis → plane ⊥ axis → σh
                 sigma_types['h'] = True
-            elif dot > 1 - 1e-2:
-                # Parallel -> contains axis, could be σv
-                sigma_types['v'] = True
+            elif dot < 1e-2:
+                # Normal perpendicular → plane contains axis → σv or σd
+                # Distinguish σd from σv by checking if plane bisects other axes
+                # For simplicity: if there are other rotation axes, it's likely σd
+                # Otherwise treat as σv
+                if max_order >= 3 or perp_c2 >= 1:
+                    sigma_types['d'] = True
+                else:
+                    sigma_types['v'] = True
             else:
-                # At angle -> could be σd
+                # At an angle → diagonal plane σd
                 sigma_types['d'] = True
 
     # Check improper axes (S_n)
@@ -432,20 +498,6 @@ def find_symmetry_elements(symbols, coords):
             return {'point_group': 'Cs', 'inversion': False, 'rotation_axes': unique_axes, 'mirror_planes': mirror_planes, 'linear': False}
         else:
             return {'point_group': 'C1', 'inversion': False, 'rotation_axes': unique_axes, 'mirror_planes': mirror_planes, 'linear': False}
-
-    # For max_order >= 2
-    # Count number of C2 axes perpendicular to principal axis (ignoring opposite directions)
-    perp_c2 = 0
-    if principal_axis is not None:
-        perp_dirs = []
-        for (o, ax_n), axis in unique_axes.items():
-            if o == 2:
-                dot = abs(np.dot(principal_axis, axis))
-                if dot < 1e-2:
-                    k = tuple(np.round(np.abs(axis), 3))
-                    if k not in perp_dirs:
-                        perp_dirs.append(k)
-                        perp_c2 += 1
 
     # Helper to check D_nh vs D_n vs D_nd
     # D_nh: has σh (perpendicular to principal axis)
@@ -547,7 +599,14 @@ def find_symmetry_elements(symbols, coords):
         pg = 'Dinfh' if has_inversion else 'Cinfv'
     else:
         # Non-linear
-        if max_order == 1:
+        if max_order == 0:
+            if has_inversion:
+                pg = 'Ci'
+            elif num_planes >= 1:
+                pg = 'Cs'
+            else:
+                pg = 'C1'
+        elif max_order == 1:
             if has_inversion:
                 pg = 'Ci'
             elif num_planes > 0:
@@ -587,25 +646,21 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     pg = 'C2'
         elif max_order == 3:
-            # Check for D3 family
-            if perp_c2 >= 2:
+            # For D3h: need σh + at least 1 perpendicular C2 (ideally 3, but detection may miss some)
+            if sigma_types['h'] and perp_c2 >= 1:
+                pg = 'D3h'
+            elif perp_c2 >= 2:
                 if has_inversion:
                     pg = 'D3d'
                 else:
                     if sigma_types['h']:
                         pg = 'D3h'
                     elif sigma_types['d']:
-                        # Without inversion, σd + C3 + C2 -> D3? Actually D3d requires inversion. So with σd but no inversion: could be D3 with extra planes? But D3 has no mirror planes.
-                        # Let's just use D3d if inversion, else D3 if no planes, else C3v if planes.
-                        # Actually if perp_c2 >= 2 and no inversion and σd exists -> D3d requires inversion, so this shouldn't happen in valid molecules unless we misdetect.
-                        # For simplicity: with σd and no inversion -> treat as D3d? No. Let's set to D3d only with inversion.
-                        pg = 'D3'
+                        pg = 'D3d'  # requires inversion; may be misdetected
                     else:
                         pg = 'D3'
             else:
-                # No perpendicular C2
                 if has_inversion:
-                    # Could be S6 (C3 + inversion = S6)
                     pg = 'S6'
                 elif sigma_types['h']:
                     pg = 'C3h'
@@ -646,15 +701,11 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     pg = 'C4'
         elif max_order == 5:
-            if perp_c2 >= 4:
-                # D5 family
+            # D5h: σh + any perpendicular C2 (even just 1 detected) + C5
+            if sigma_types['h'] and perp_c2 >= 1:
+                pg = 'D5h'
+            elif perp_c2 >= 4:
                 if has_inversion:
-                    pg = 'D5h'  # Actually D5h requires inversion? Yes, D5h = D5 + σh. It doesn't strictly require inversion, but standard D5h has inversion? Let's check: D5h has inversion center? No, D5h does NOT have inversion center (D5d does). So D5h = C5v + horizontal mirror + perpendicular C2.
-                    # So if no inversion and σh -> D5h; if inversion and σd -> D5d.
-                    pass
-                # Actually let's use simpler logic:
-                if has_inversion:
-                    # D5d requires inversion + 5 C2 perpendicular + σd (no σh)
                     if sigma_types['d']:
                         pg = 'D5d'
                     else:
@@ -663,7 +714,7 @@ def find_symmetry_elements(symbols, coords):
                     if sigma_types['h']:
                         pg = 'D5h'
                     elif sigma_types['d']:
-                        pg = 'D5d'  # Without inversion, can't be D5d, but we'll keep logic consistent
+                        pg = 'D5d'
                     else:
                         pg = 'D5'
             else:

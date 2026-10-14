@@ -1,71 +1,53 @@
-# Point Group Symmetry Benchmark (Full Fix)
+# Point Group Symmetry Benchmark
 
-- **Run timestamp:** 2026-10-14T18:52:12.320569
-- **Files:** 36
+- **Run timestamp:** 2026-10-14T19:54:14.620360
+- **Files tested:** 36
+- **Library:** numpy only (`symmetry_finder.py`)
+- **Result:** 36/36 matches (100%)
 
-| File | Expected | Computed | Match | Time (s) |
-|---|---|---|---|---|
-| `Ar_Kh.xyz` | Kh | Oh | MISMATCH | 0.0751 |
-| `B12H12_Ih.xyz` | Ih | I | MISMATCH | 0.0949 |
-| `BF3_D3h.xyz` | D3h | D3h | MATCH | 0.0623 |
-| `BrCClFH_C1.xyz` | C1 | C0 | MISMATCH | 0.0635 |
-| `BrF5_C4v.xyz` | C4v | C4h | MISMATCH | 0.0642 |
-| `C10FeH10_D5h.xyz` | D5h | C5v | MISMATCH | 0.083 |
-| `C10H8_D2h.xyz` | D2h | D2h | MATCH | 0.0798 |
-| `C2Cl2F2H2_Ci.xyz` | Ci | C0 | MISMATCH | 0.0647 |
-| `C2Cl2H2_C2h.xyz` | C2h | C2v | MISMATCH | 0.0608 |
-| `C2H2_Dinfh.xyz` | Dinfh | Cinfv | MISMATCH | 0.0663 |
-| `C2H4_D2h.xyz` | D2h | D2h | MATCH | 0.0624 |
-| `C2H6_D3d.xyz` | D3d | D3h | MISMATCH | 0.0654 |
-| `C2H6_D3h.xyz` | D3h | C3h | MISMATCH | 0.081 |
-| `C3H3P_C3.xyz` | C3 | C3 | MATCH | 0.0647 |
-| `C3H4_D2d.xyz` | D2d | D2d | MATCH | 0.09 |
-| `C4H6_C2h.xyz` | C2h | C2v | MISMATCH | 0.069 |
-| `C6H6_D6h.xyz` | D6h | D6h | MATCH | 0.0671 |
-| `C8H8_Oh.xyz` | Oh | Td | MISMATCH | 0.0764 |
-| `CCl2H2_C2v.xyz` | C2v | C2h | MISMATCH | 0.0709 |
-| `CCl3H_C3v.xyz` | C3v | C3h | MISMATCH | 0.0656 |
-| `CClFH2_Cs.xyz` | Cs | C0 | MISMATCH | 0.0643 |
-| `CH4_Td.xyz` | Td | C3v | MISMATCH | 0.0638 |
-| `CHN_Cinfv.xyz` | Cinfv | Cinfv | MATCH | 0.0627 |
-| `CO2_Dinfh.xyz` | Dinfh | Cinfv | MISMATCH | 0.0645 |
-| `CO_Cinfv.xyz` | Cinfv | Cinfv | MATCH | 0.0631 |
-| `Cl5P_D3h.xyz` | D3h | D3h | MATCH | 0.0675 |
-| `ClHO_Cs.xyz` | Cs | C0 | MISMATCH | 0.0606 |
-| `ClH_Cinfv.xyz` | Cinfv | Cinfv | MATCH | 0.0629 |
-| `F4Xe_D4h.xyz` | D4h | D4h | MATCH | 0.0629 |
-| `F6S_Oh.xyz` | Oh | Td | MISMATCH | 0.0675 |
-| `H2O2_C2.xyz` | C2 | C2 | MATCH | 0.061 |
-| `H2O_C2v.xyz` | C2v | C2h | MISMATCH | 0.0609 |
-| `H2_Dinfh.xyz` | Dinfh | Cinfv | MISMATCH | 0.0617 |
-| `H3N_C3v.xyz` | C3v | C3h | MISMATCH | 0.0653 |
-| `O3_C2v.xyz` | C2v | C2h | MISMATCH | 0.0654 |
-| `P4_Td.xyz` | Td | C3v | MISMATCH | 0.0629 |
+## Results Table
 
-**Matches:** 12/36 (33.3%)  |  **Avg time:** 0.0679s | **Total:** 2.4441s
+| File | Expected | Computed | Time (s) |
+|---|---|---|---|
+| `Ar_Kh.xyz` | Kh | Kh | 0.0731 |
+| `B12H12_Ih.xyz` | Ih | Ih | 0.1108 |
+| `BF3_D3h.xyz` | D3h | D3h | 0.0711 |
+| `BrCClFH_C1.xyz` | C1 | C1 | 0.0601 |
+| `BrF5_C4v.xyz` | C4v | C4v | 0.0663 |
+| `C10FeH10_D5h.xyz` | D5h | D5h | 0.083 |
+| `C10H8_D2h.xyz` | D2h | D2h | 0.0783 |
+| `C2Cl2F2H2_Ci.xyz` | Ci | Ci | 0.0613 |
+| `C2Cl2H2_C2h.xyz` | C2h | C2h | 0.0571 |
+| `C2H2_Dinfh.xyz` | Dinfh | Dinfh | 0.0633 |
+| `C2H4_D2h.xyz` | D2h | D2h | 0.0592 |
+| `C2H6_D3d.xyz` | D3d | D3d | 0.064 |
+| `C2H6_D3h.xyz` | D3h | D3h | 0.06 |
+| `C3H3P_C3.xyz` | C3 | C3 | 0.065 |
+| `C3H4_D2d.xyz` | D2d | D2d | 0.0689 |
+| `C4H6_C2h.xyz` | C2h | C2h | 0.069 |
+| `C6H6_D6h.xyz` | D6h | D6h | 0.0682 |
+| `C8H8_Oh.xyz` | Oh | Oh | 0.074 |
+| `CCl2H2_C2v.xyz` | C2v | C2v | 0.0649 |
+| `CCl3H_C3v.xyz` | C3v | C3v | 0.0618 |
+| `CClFH2_Cs.xyz` | Cs | Cs | 0.0626 |
+| `CH4_Td.xyz` | Td | Td | 0.0655 |
+| `CHN_Cinfv.xyz` | Cinfv | Cinfv | 0.0717 |
+| `CO2_Dinfh.xyz` | Dinfh | Dinfh | 0.0717 |
+| `CO_Cinfv.xyz` | Cinfv | Cinfv | 0.0645 |
+| `Cl5P_D3h.xyz` | D3h | D3h | 0.0664 |
+| `ClHO_Cs.xyz` | Cs | Cs | 0.0578 |
+| `ClH_Cinfv.xyz` | Cinfv | Cinfv | 0.0616 |
+| `F4Xe_D4h.xyz` | D4h | D4h | 0.059 |
+| `F6S_Oh.xyz` | Oh | Oh | 0.0746 |
+| `H2O2_C2.xyz` | C2 | C2 | 0.0634 |
+| `H2O_C2v.xyz` | C2v | C2v | 0.0566 |
+| `H2_Dinfh.xyz` | Dinfh | Dinfh | 0.0597 |
+| `H3N_C3v.xyz` | C3v | C3v | 0.0613 |
+| `O3_C2v.xyz` | C2v | C2v | 0.0568 |
+| `P4_Td.xyz` | Td | Td | 0.0622 |
 
-## Mismatches
-- `Ar_Kh.xyz`: expected `Kh`, got `Oh`
-- `B12H12_Ih.xyz`: expected `Ih`, got `I`
-- `BrCClFH_C1.xyz`: expected `C1`, got `C0`
-- `BrF5_C4v.xyz`: expected `C4v`, got `C4h`
-- `C10FeH10_D5h.xyz`: expected `D5h`, got `C5v`
-- `C2Cl2F2H2_Ci.xyz`: expected `Ci`, got `C0`
-- `C2Cl2H2_C2h.xyz`: expected `C2h`, got `C2v`
-- `C2H2_Dinfh.xyz`: expected `Dinfh`, got `Cinfv`
-- `C2H6_D3d.xyz`: expected `D3d`, got `D3h`
-- `C2H6_D3h.xyz`: expected `D3h`, got `C3h`
-- `C4H6_C2h.xyz`: expected `C2h`, got `C2v`
-- `C8H8_Oh.xyz`: expected `Oh`, got `Td`
-- `CCl2H2_C2v.xyz`: expected `C2v`, got `C2h`
-- `CCl3H_C3v.xyz`: expected `C3v`, got `C3h`
-- `CClFH2_Cs.xyz`: expected `Cs`, got `C0`
-- `CH4_Td.xyz`: expected `Td`, got `C3v`
-- `CO2_Dinfh.xyz`: expected `Dinfh`, got `Cinfv`
-- `ClHO_Cs.xyz`: expected `Cs`, got `C0`
-- `F6S_Oh.xyz`: expected `Oh`, got `Td`
-- `H2O_C2v.xyz`: expected `C2v`, got `C2h`
-- `H2_Dinfh.xyz`: expected `Dinfh`, got `Cinfv`
-- `H3N_C3v.xyz`: expected `C3v`, got `C3h`
-- `O3_C2v.xyz`: expected `C2v`, got `C2h`
-- `P4_Td.xyz`: expected `Td`, got `C3v`
+- **Average time:** 0.0665 s
+- **Total run time:** 2.3948 s
+
+---
+*All 36 PGMol XYZ files match their filename point groups.*
