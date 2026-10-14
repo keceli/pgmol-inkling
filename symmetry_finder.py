@@ -112,13 +112,20 @@ def find_symmetry_elements(symbols, coords):
         }
     axes_set = {}
     # Standard axes
+    # Standard axes including icosahedral C5 directions for Ih/I detection
+    phi = (1 + np.sqrt(5)) / 2
+    icosahedral = [
+        np.array([0, 1, phi]), np.array([0, 1, -phi]), np.array([0, -1, phi]), np.array([0, -1, -phi]),
+        np.array([1, phi, 0]), np.array([1, -phi, 0]), np.array([-1, phi, 0]), np.array([-1, -phi, 0]),
+        np.array([phi, 0, 1]), np.array([phi, 0, -1]), np.array([-phi, 0, 1]), np.array([-phi, 0, -1]),
+    ]
     standard = [
         np.array([1,0,0]), np.array([0,1,0]), np.array([0,0,1]),
         np.array([1,1,0]), np.array([1,-1,0]), np.array([1,0,1]), np.array([1,0,-1]),
         np.array([0,1,1]), np.array([0,1,-1]),
         np.array([1,1,1]), np.array([1,1,-1]), np.array([1,-1,1]), np.array([-1,1,1]),
     ]
-    for ax in standard:
+    for ax in standard + icosahedral:
         axes_set[tuple(np.round(ax / np.linalg.norm(ax), 3))] = ax / np.linalg.norm(ax)
 
     # Derive from atom pairs: axis through center and atom
