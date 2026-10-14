@@ -135,17 +135,6 @@ def find_symmetry_elements(symbols, coords):
                 nv = np.linalg.norm(v)
                 if nv > TOL:
                     axes_set[tuple(np.round(v/nv, 3))] = v/nv
-                    # Also add perpendicular axes (for D-group detection)
-                    # Cross product with standard directions to find perpendicular axes
-                    for std in standard:
-                        std_n = std / np.linalg.norm(std)
-                        cross_v = np.cross(v_n, std_n)
-                        nv_cross = np.linalg.norm(cross_v)
-                        if nv_cross > 1e-2:
-                            cross_n = cross_v / nv_cross
-                            k = tuple(np.round(cross_n, 3))
-                            if k not in [tuple(np.round(a / np.linalg.norm(a), 3)) for a in axes_set.values()]:
-                                axes_set[k] = cross_n
 
     axes = [v for v in axes_set.values()]
 
