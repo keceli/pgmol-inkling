@@ -419,42 +419,42 @@ def find_symmetry_elements(symbols, coords):
     # Oh: 4 C3 diagonals, 3 C4 along x/y/z, 6 σd + 3 σh, inversion
     # Check Td first: 4+ diagonal C3, no pure C4, no inversion, has mirror planes
     if diag_c3 >= 4:
-        if not has_inversion:
-            # Could be Td (if C2 axes present along x/y/z) or just C3v
-            # Td requires at least 3 C2 axes along x/y/z (or S4 axes)
-            if c4_main == 0 and c2_total >= 3:
-                # Td: cubic tetrahedral
-                return {
-                    'point_group': 'Td',
-                    'inversion': False,
-                    'rotation_axes': unique_axes,
-                    'mirror_planes': mirror_planes,
-                    'linear': False,
-                }
-        # If we reach here and diag_c3 >= 4 + c4_main >= 3: Oh
+        # Cubic groups: distinguish Td, Oh, O, T, Th based on elements
         if c4_main >= 3:
+            if has_inversion:
+                pg_cubic = 'Oh'
+            else:
+                # Could be O (no mirror, no inversion) or Td (mirror, no inversion)
+                if num_planes > 0:
+                    pg_cubic = 'Td'
+                else:
+                    pg_cubic = 'O'
             return {
-                'point_group': 'Oh' if has_inversion else 'Td',
+                'point_group': pg_cubic,
                 'inversion': has_inversion,
                 'rotation_axes': unique_axes,
                 'mirror_planes': mirror_planes,
                 'linear': False,
             }
-        if has_inversion:
-            # Oh: cubic octahedral
-            # Check for mirror planes (at least some)
-            return {
-                'point_group': 'Oh',
-                'inversion': True,
-                'rotation_axes': unique_axes,
-                'mirror_planes': mirror_planes,
-                'linear': False,
-            }
         else:
-            # Td: cubic tetrahedral (4 C3, 3 C4, 6 σd, no inversion)
+            # No C4 axes, but C3 diagonals present (T family)
+            if c2_total >= 3:
+                if has_inversion:
+                    pg_cubic = 'Th'
+                else:
+                    if num_planes > 0:
+                        pg_cubic = 'Td'
+                    else:
+                        pg_cubic = 'T'
+            else:
+                # Only C3 diagonals, no C2 perpendicular
+                if has_inversion:
+                    pg_cubic = 'Th'
+                else:
+                    pg_cubic = 'T'
             return {
-                'point_group': 'Td',
-                'inversion': False,
+                'point_group': pg_cubic,
+                'inversion': has_inversion,
                 'rotation_axes': unique_axes,
                 'mirror_planes': mirror_planes,
                 'linear': False,
@@ -527,11 +527,14 @@ def find_symmetry_elements(symbols, coords):
     # We already have improper_detected, but let's use it for S4/S6 classification
     has_s4 = False
     has_s6 = False
+    has_s8 = False
     for (order, ax_n) in improper_detected:
         if order == 4:
             has_s4 = True
         if order == 6:
             has_s6 = True
+        if order == 8:
+            has_s8 = True
 
     # Now build point group string
     # Linear handled above.
@@ -752,6 +755,8 @@ def find_symmetry_elements(symbols, coords):
                     pg = 'C4v'
                 elif has_s4:
                     pg = 'S4'
+                elif has_s8:
+                    pg = 'S8'
                 else:
                     pg = 'C4'
         elif max_order == 5:
@@ -789,6 +794,8 @@ def find_symmetry_elements(symbols, coords):
                 else:
                     if sigma_types['h']:
                         pg = 'D6h'
+                    elif sigma_types['d']:
+                        pg = 'D6d'
                     else:
                         pg = 'D6'
             else:
