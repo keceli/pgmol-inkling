@@ -1,0 +1,24 @@
+site_name: Point Group Symmetry Finder
+site_url: https://keceli.github.io/pgmol-inkling/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+    - scheme: slate
+      primary: indigo
+      accent: blue
+  features:
+    - navigation.expand
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Benchmark: benchmark.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/keceli/pgmol-inkling
